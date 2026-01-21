@@ -36,8 +36,8 @@ type InvalidationEvent struct {
 }
 
 // NewInvalidationEvent creates a new InvalidationEvent with the current timestamp.
-func NewInvalidationEvent(cacheName, instanceID, key string) InvalidationEvent {
-	return InvalidationEvent{
+func NewInvalidationEvent(cacheName, instanceID, key string) *InvalidationEvent {
+	return &InvalidationEvent{
 		CacheName:  cacheName,
 		InstanceID: instanceID,
 		Key:        key,

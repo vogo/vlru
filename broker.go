@@ -32,7 +32,7 @@ import (
 type Broker interface {
 	// Publish sends an invalidation event to other instances.
 	// This is called when a local cache evicts or removes a key.
-	Publish(ctx context.Context, event InvalidationEvent) error
+	Publish(ctx context.Context, event *InvalidationEvent) error
 
 	// Channel returns a channel that receives invalidation events from other instances.
 	Channel() <-chan *InvalidationEvent

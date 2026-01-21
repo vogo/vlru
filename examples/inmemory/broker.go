@@ -43,7 +43,7 @@ func New() *Broker {
 }
 
 // Publish sends an invalidation event to all listeners.
-func (b *Broker) Publish(_ context.Context, event vlru.InvalidationEvent) error {
+func (b *Broker) Publish(_ context.Context, event *vlru.InvalidationEvent) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -52,7 +52,7 @@ func (b *Broker) Publish(_ context.Context, event vlru.InvalidationEvent) error 
 	}
 
 	// Store event for inspection
-	b.events = append(b.events, event)
+	b.events = append(b.events, *event)
 
 	// Route to channel with a fake remote instance ID to simulate distributed invalidation.
 	// In real scenarios, events come from different processes with different InstanceIDs.

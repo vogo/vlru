@@ -42,7 +42,7 @@ func newTestBroker() *testBroker {
 	}
 }
 
-func (b *testBroker) Publish(_ context.Context, event vlru.InvalidationEvent) error {
+func (b *testBroker) Publish(_ context.Context, event *vlru.InvalidationEvent) error {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -50,7 +50,7 @@ func (b *testBroker) Publish(_ context.Context, event vlru.InvalidationEvent) er
 		return nil
 	}
 
-	b.events = append(b.events, event)
+	b.events = append(b.events, *event)
 
 	// Route to channel with a fake remote instance ID to simulate distributed invalidation.
 	// In real scenarios, events come from different processes with different InstanceIDs.
