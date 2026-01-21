@@ -31,14 +31,14 @@ import (
 type testBroker struct {
 	mu     sync.Mutex
 	events []vlru.InvalidationEvent
-	ch     chan vlru.InvalidationEvent
+	ch     chan *vlru.InvalidationEvent
 	closed bool
 }
 
 func newTestBroker() *testBroker {
 	return &testBroker{
 		events: make([]vlru.InvalidationEvent, 0),
-		ch:     make(chan vlru.InvalidationEvent, 100),
+		ch:     make(chan *vlru.InvalidationEvent, 100),
 	}
 }
 
@@ -54,7 +54,7 @@ func (b *testBroker) Publish(_ context.Context, event vlru.InvalidationEvent) er
 
 	// Route to channel with a fake remote instance ID to simulate distributed invalidation.
 	// In real scenarios, events come from different processes with different InstanceIDs.
-	remoteEvent := vlru.InvalidationEvent{
+	remoteEvent := &vlru.InvalidationEvent{
 		CacheName:  event.CacheName,
 		InstanceID: "remote-instance",
 		Key:        event.Key,
@@ -68,7 +68,7 @@ func (b *testBroker) Publish(_ context.Context, event vlru.InvalidationEvent) er
 	return nil
 }
 
-func (b *testBroker) Channel() <-chan vlru.InvalidationEvent {
+func (b *testBroker) Channel() <-chan *vlru.InvalidationEvent {
 	return b.ch
 }
 

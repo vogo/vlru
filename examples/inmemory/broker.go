@@ -31,14 +31,14 @@ type Broker struct {
 	mu     sync.RWMutex
 	closed bool
 	events []vlru.InvalidationEvent
-	ch     chan vlru.InvalidationEvent
+	ch     chan *vlru.InvalidationEvent
 }
 
 // New creates a new in-memory broker.
 func New() *Broker {
 	return &Broker{
 		events: make([]vlru.InvalidationEvent, 0),
-		ch:     make(chan vlru.InvalidationEvent, 100),
+		ch:     make(chan *vlru.InvalidationEvent, 100),
 	}
 }
 
@@ -56,7 +56,7 @@ func (b *Broker) Publish(_ context.Context, event vlru.InvalidationEvent) error 
 
 	// Route to channel with a fake remote instance ID to simulate distributed invalidation.
 	// In real scenarios, events come from different processes with different InstanceIDs.
-	remoteEvent := vlru.InvalidationEvent{
+	remoteEvent := &vlru.InvalidationEvent{
 		CacheName:  event.CacheName,
 		InstanceID: "remote-instance",
 		Key:        event.Key,
@@ -71,7 +71,7 @@ func (b *Broker) Publish(_ context.Context, event vlru.InvalidationEvent) error 
 }
 
 // Channel returns a channel that receives invalidation events.
-func (b *Broker) Channel() <-chan vlru.InvalidationEvent {
+func (b *Broker) Channel() <-chan *vlru.InvalidationEvent {
 	return b.ch
 }
 

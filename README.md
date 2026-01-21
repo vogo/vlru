@@ -164,7 +164,7 @@ type Broker interface {
     Publish(ctx context.Context, event InvalidationEvent) error
 
     // Channel returns a channel that receives invalidation events from other instances
-    Channel() <-chan InvalidationEvent
+    Channel() <-chan *InvalidationEvent
 
     // Close releases resources
     Close() error

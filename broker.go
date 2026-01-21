@@ -35,7 +35,7 @@ type Broker interface {
 	Publish(ctx context.Context, event InvalidationEvent) error
 
 	// Channel returns a channel that receives invalidation events from other instances.
-	Channel() <-chan InvalidationEvent
+	Channel() <-chan *InvalidationEvent
 
 	// Close releases resources held by the broker.
 	Close() error
@@ -79,13 +79,16 @@ func StartEventBroker(runner *vrun.Runner, broker Broker) {
 		}()
 
 		select {
-		case msg, ok := <-ch:
+		case event, ok := <-ch:
 			if !ok {
 				vlog.Infof("vlru event broker channel closed")
 				return
 			}
-			vlog.Debugf("vlru invalidation event | cache: %s | instance: %s | key: %s", msg.CacheName, msg.InstanceID, msg.Key)
-			if err := registry.HandleEvent(msg.CacheName, msg.InstanceID, msg.Key); err != nil {
+			if event == nil {
+				return
+			}
+			vlog.Debugf("vlru invalidation event | cache: %s | instance: %s | key: %s", event.CacheName, event.InstanceID, event.Key)
+			if err := registry.HandleEvent(event.CacheName, event.InstanceID, event.Key); err != nil {
 				vlog.Errorf("vlru error handling event | err: %v", err)
 			}
 		case <-runner.C:
