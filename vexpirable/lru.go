@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-// Package expirable provides an LRU cache with TTL expiration and distributed invalidation.
-package expirable
+// Package vexpirable provides an LRU cache with TTL expiration and distributed invalidation.
+package vexpirable
 
 import (
 	"context"

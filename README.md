@@ -119,11 +119,21 @@ cache, err := vlru.New[string, User](1000,
 ### Expirable LRU Cache (with TTL)
 
 ```go
-import "github.com/vogo/vlru/expirable"
+import "github.com/vogo/vlru/vexpirable"
 
 // Create cache with 5-minute TTL
-cache := expirable.NewLRU[string, User](1000, nil, 5*time.Minute)
+cache := vexpirable.NewLRU[string, User](1000, nil, 5*time.Minute)
 defer cache.Close()
+
+// With eviction callback
+cache := vexpirable.NewLRU[string, User](1000, func(key string, value User) {
+    log.Printf("expired or evicted: %s", key)
+}, 5*time.Minute)
+
+// With custom options
+cache := vexpirable.NewLRU[string, User](1000, nil, 5*time.Minute,
+    vexpirable.WithCacheName[string, User]("users"),
+)
 ```
 
 ### Cache Methods

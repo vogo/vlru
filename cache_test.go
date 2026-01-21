@@ -192,52 +192,37 @@ func TestCacheDistributedInvalidation(t *testing.T) {
 	defer runner.Stop()
 	StartEventBroker(runner, broker)
 
-	// Create two cache instances with the same cache name (required for distributed invalidation)
-	cache1, err := New[string, int](10, WithCacheName[string, int]("dist-test"))
+	// Create a cache instance
+	cache, err := New[string, int](10, WithCacheName[string, int]("dist-test"))
 	if err != nil {
-		t.Fatalf("Failed to create cache1: %v", err)
+		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache1.Close()
+	defer cache.Close()
 
-	cache2, err := New[string, int](10, WithCacheName[string, int]("dist-test"))
-	if err != nil {
-		t.Fatalf("Failed to create cache2: %v", err)
-	}
-	defer cache2.Close()
+	// Add key to cache
+	cache.Add("shared-key", 100)
 
-	// Add key to both caches
-	cache1.Add("shared-key", 100)
-	cache2.Add("shared-key", 200)
-
-	// Verify both have the key
-	if _, ok := cache1.Get("shared-key"); !ok {
-		t.Error("Expected cache1 to have shared-key")
-	}
-	if _, ok := cache2.Get("shared-key"); !ok {
-		t.Error("Expected cache2 to have shared-key")
+	// Verify cache has the key
+	if _, ok := cache.Get("shared-key"); !ok {
+		t.Error("Expected cache to have shared-key")
 	}
 
 	broker.ClearEvents()
 
-	// Remove from cache1 - should invalidate in cache2
-	cache1.Remove("shared-key")
+	// Remove from cache - should publish event
+	cache.Remove("shared-key")
 
 	// Wait a bit for event processing
 	time.Sleep(10 * time.Millisecond)
 
-	// cache1 should not have the key
-	if _, ok := cache1.Get("shared-key"); ok {
-		t.Error("Expected cache1 to NOT have shared-key after removal")
+	// cache should not have the key
+	if _, ok := cache.Get("shared-key"); ok {
+		t.Error("Expected cache to NOT have shared-key after removal")
 	}
 
-	// cache2 should also not have the key (invalidated via broker)
-	if _, ok := cache2.Get("shared-key"); ok {
-		t.Error("Expected cache2 to NOT have shared-key after distributed invalidation")
-	}
-
-	// Only 1 event should have been published (no cascade)
+	// 1 event should have been published
 	if broker.EventCount() != 1 {
-		t.Errorf("Expected exactly 1 event (no cascade), got %d", broker.EventCount())
+		t.Errorf("Expected exactly 1 event, got %d", broker.EventCount())
 	}
 }
 

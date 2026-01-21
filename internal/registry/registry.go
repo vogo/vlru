@@ -38,11 +38,11 @@ type CacheInvalidator interface {
 // registry manages cache registration and event routing.
 type registry struct {
 	mu     sync.RWMutex
-	caches map[string][]CacheInvalidator // cacheName -> list of caches
+	caches map[string]CacheInvalidator // cacheName -> cache
 }
 
 var globalRegistry = &registry{
-	caches: make(map[string][]CacheInvalidator),
+	caches: make(map[string]CacheInvalidator),
 }
 
 // Register adds a cache to the global registry for event routing.
@@ -55,7 +55,7 @@ func Unregister(cache CacheInvalidator) {
 	globalRegistry.unregister(cache)
 }
 
-// HandleEvent routes an invalidation event to the appropriate caches.
+// HandleEvent routes an invalidation event to the appropriate cache.
 // It filters out events from the same instance to prevent cascading.
 func HandleEvent(cacheName, instanceID, key string) error {
 	return globalRegistry.handleEvent(cacheName, instanceID, key)
@@ -67,7 +67,7 @@ func (r *registry) register(cache CacheInvalidator) {
 	defer r.mu.Unlock()
 
 	name := cache.CacheName()
-	r.caches[name] = append(r.caches[name], cache)
+	r.caches[name] = cache
 }
 
 // unregister removes a cache from the registry.
@@ -76,36 +76,24 @@ func (r *registry) unregister(cache CacheInvalidator) {
 	defer r.mu.Unlock()
 
 	name := cache.CacheName()
-	caches := r.caches[name]
-	for i, c := range caches {
-		if c.InstanceID() == cache.InstanceID() {
-			r.caches[name] = append(caches[:i], caches[i+1:]...)
-			break
-		}
-	}
-	if len(r.caches[name]) == 0 {
-		delete(r.caches, name)
-	}
+	delete(r.caches, name)
 }
 
-// handleEvent routes an invalidation event to the appropriate caches.
+// handleEvent routes an invalidation event to the appropriate cache.
 func (r *registry) handleEvent(cacheName, instanceID, key string) error {
 	r.mu.RLock()
-	caches := r.caches[cacheName]
+	cache, ok := r.caches[cacheName]
 	r.mu.RUnlock()
 
-	for _, cache := range caches {
-		// Skip if this event came from the same instance (prevent cascade)
-		if cache.InstanceID() == instanceID {
-			continue
-		}
-
-		// Invalidate the key locally without publishing
-		if err := cache.InvalidateKey(key); err != nil {
-			// Log but don't fail - other caches may still need to be notified
-			continue
-		}
+	if !ok {
+		return nil
 	}
 
-	return nil
+	// Skip if this event came from the same instance (prevent cascade)
+	if cache.InstanceID() == instanceID {
+		return nil
+	}
+
+	// Invalidate the key locally without publishing
+	return cache.InvalidateKey(key)
 }
