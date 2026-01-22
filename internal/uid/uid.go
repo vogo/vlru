@@ -21,8 +21,9 @@ package uid
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -30,17 +31,44 @@ import (
 // All caches in the same process share this ID.
 var InstanceID = generate()
 
-// generate creates a unique instance ID combining hostname, timestamp, and random bytes.
+// generate creates a unique instance ID.
+// Priority: IP address > hostname > timestamp+randomBytes.
 func generate() string {
-	hostname, _ := os.Hostname()
-	if hostname == "" {
-		hostname = "unknown"
+	// Try to get local IP address first
+	if ip := getLocalIP(); ip != "" {
+		return ip
 	}
 
-	timestamp := time.Now().UnixNano()
+	// Fall back to hostname + random hex
+	if hostname, err := os.Hostname(); err == nil && hostname != "" {
+		return hostname + "-" + randomHex()
+	}
 
+	// Last resort: timestamp + random hex
+	return strconv.FormatInt(time.Now().UnixNano(), 10) + "-" + randomHex()
+}
+
+// getLocalIP returns the non-loopback local IP address, or empty string if not found.
+func getLocalIP() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+
+	for _, addr := range addrs {
+		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
+			if ipNet.IP.To4() != nil {
+				return ipNet.IP.String()
+			}
+		}
+	}
+
+	return ""
+}
+
+// randomHex generates a random hex string of length 8.
+func randomHex() string {
 	randomBytes := make([]byte, 4)
 	_, _ = rand.Read(randomBytes)
-
-	return fmt.Sprintf("%s-%d-%s", hostname, timestamp, hex.EncodeToString(randomBytes))
+	return hex.EncodeToString(randomBytes)
 }

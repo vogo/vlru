@@ -18,6 +18,8 @@
 package uid
 
 import (
+	"net"
+	"os"
 	"strings"
 	"testing"
 )
@@ -27,18 +29,24 @@ func TestInstanceID(t *testing.T) {
 		t.Error("InstanceID is empty")
 	}
 
-	// Should contain hostname, timestamp, and random parts
-	parts := strings.Split(InstanceID, "-")
-	if len(parts) < 3 {
-		t.Errorf("Expected at least 3 parts, got %d: %s", len(parts), InstanceID)
-	}
-}
+	t.Logf("InstanceID: %s", InstanceID)
 
-func TestInstanceIDConsistency(t *testing.T) {
-	// InstanceID should be the same across multiple accesses
-	id1 := InstanceID
-	id2 := InstanceID
-	if id1 != id2 {
-		t.Errorf("InstanceID changed between accesses: %s vs %s", id1, id2)
+	// InstanceID should be one of: IP address, hostname-random, or timestamp-random
+	// Check if it's a valid IP
+	if ip := net.ParseIP(InstanceID); ip != nil {
+		return // Valid IP address
+	}
+
+	// Check if it starts with hostname (hostname-randomHex format)
+	if hostname, err := os.Hostname(); err == nil && hostname != "" {
+		if strings.HasPrefix(InstanceID, hostname+"-") {
+			return // Valid hostname-random format
+		}
+	}
+
+	// Should be timestamp-random format (numeric-hex)
+	parts := strings.Split(InstanceID, "-")
+	if len(parts) != 2 {
+		t.Errorf("Expected IP, hostname-random, or timestamp-random format, got: %s", InstanceID)
 	}
 }
