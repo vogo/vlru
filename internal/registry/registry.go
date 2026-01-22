@@ -21,20 +21,18 @@ package registry
 import (
 	"sync"
 
+	"github.com/vogo/vlru/internal/uid"
 	"github.com/vogo/vogo/vlog"
 )
 
 // CacheInvalidator is implemented by caches that can receive invalidation events.
 type CacheInvalidator interface {
+	// CacheName returns the name of this cache.
+	CacheName() string
+
 	// InvalidateKey removes a key from the cache without publishing an event.
 	// The serializedKey is the string representation of the key.
 	InvalidateKey(serializedKey string) error
-
-	// InstanceID returns the unique identifier for this cache instance.
-	InstanceID() string
-
-	// CacheName returns the name of this cache.
-	CacheName() string
 }
 
 // registry manages cache registration and event routing.
@@ -59,8 +57,8 @@ func Unregister(cache CacheInvalidator) {
 
 // HandleEvent routes an invalidation event to the appropriate cache.
 // It filters out events from the same instance to prevent cascading.
-func HandleEvent(cacheName, instanceID, key string) error {
-	return globalRegistry.handleEvent(cacheName, instanceID, key)
+func HandleEvent(cacheName, instance, key string) error {
+	return globalRegistry.handleEvent(cacheName, instance, key)
 }
 
 // register adds a cache to the registry for event routing.
@@ -86,17 +84,17 @@ func (r *registry) unregister(cache CacheInvalidator) {
 }
 
 // handleEvent routes an invalidation event to the appropriate cache.
-func (r *registry) handleEvent(cacheName, instanceID, key string) error {
+func (r *registry) handleEvent(cacheName, instance, key string) error {
+	// Skip if this event came from the same instance (prevent cascade)
+	if uid.Instance == instance {
+		return nil
+	}
+
 	r.mu.RLock()
 	cache, ok := r.caches[cacheName]
 	r.mu.RUnlock()
 
 	if !ok {
-		return nil
-	}
-
-	// Skip if this event came from the same instance (prevent cascade)
-	if cache.InstanceID() == instanceID {
 		return nil
 	}
 

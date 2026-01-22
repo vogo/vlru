@@ -120,9 +120,9 @@ func (l *LRU[K, V]) publishInvalidation(key K) {
 		return
 	}
 
-	event := vlru.NewInvalidationEvent(l.cacheName, uid.InstanceID, serializedKey)
+	event := vlru.NewInvalidationEvent(l.cacheName, uid.Instance, serializedKey)
 	if err := broker.Publish(context.Background(), event); err != nil {
-		vlog.Errorf("vlru error publishing event | cache: %s | instance: %s | key: %s | err: %v", event.CacheName, event.InstanceID, event.Key, err)
+		vlog.Errorf("vlru error publishing event | cache: %s | instance: %s | key: %s | err: %v", event.CacheName, event.Instance, event.Key, err)
 	}
 }
 
@@ -163,11 +163,6 @@ func (l *LRU[K, V]) InvalidateKey(serializedKey string) error {
 	l.mu.Unlock()
 
 	return nil
-}
-
-// InstanceID returns the unique identifier for this cache instance.
-func (l *LRU[K, V]) InstanceID() string {
-	return uid.InstanceID
 }
 
 // CacheName returns the name of this cache.

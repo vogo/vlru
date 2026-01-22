@@ -24,29 +24,29 @@ import (
 	"testing"
 )
 
-func TestInstanceID(t *testing.T) {
-	if InstanceID == "" {
-		t.Error("InstanceID is empty")
+func TestInstance(t *testing.T) {
+	if Instance == "" {
+		t.Error("Instance is empty")
 	}
 
-	t.Logf("InstanceID: %s", InstanceID)
+	t.Logf("Instance: %s", Instance)
 
-	// InstanceID should be one of: IP address, hostname-random, or timestamp-random
+	// Instance should be one of: IP address, hostname-random, or timestamp-random
 	// Check if it's a valid IP
-	if ip := net.ParseIP(InstanceID); ip != nil {
+	if ip := net.ParseIP(Instance); ip != nil {
 		return // Valid IP address
 	}
 
 	// Check if it starts with hostname (hostname-randomHex format)
 	if hostname, err := os.Hostname(); err == nil && hostname != "" {
-		if strings.HasPrefix(InstanceID, hostname+"-") {
+		if strings.HasPrefix(Instance, hostname+"-") {
 			return // Valid hostname-random format
 		}
 	}
 
 	// Should be timestamp-random format (numeric-hex)
-	parts := strings.Split(InstanceID, "-")
+	parts := strings.Split(Instance, "-")
 	if len(parts) != 2 {
-		t.Errorf("Expected IP, hostname-random, or timestamp-random format, got: %s", InstanceID)
+		t.Errorf("Expected IP, hostname-random, or timestamp-random format, got: %s", Instance)
 	}
 }

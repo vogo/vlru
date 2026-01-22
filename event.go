@@ -25,8 +25,8 @@ type InvalidationEvent struct {
 	// CacheName identifies which cache this event belongs to
 	CacheName string `json:"cache_name"`
 
-	// InstanceID identifies the cache instance that originated this event
-	InstanceID string `json:"instance_id"`
+	// Instance identifies the cache instance that originated this event
+	Instance string `json:"instance"`
 
 	// Key is the serialized cache key that was invalidated
 	Key string `json:"key"`
@@ -36,11 +36,11 @@ type InvalidationEvent struct {
 }
 
 // NewInvalidationEvent creates a new InvalidationEvent with the current timestamp.
-func NewInvalidationEvent(cacheName, instanceID, key string) *InvalidationEvent {
+func NewInvalidationEvent(cacheName, instance, key string) *InvalidationEvent {
 	return &InvalidationEvent{
-		CacheName:  cacheName,
-		InstanceID: instanceID,
-		Key:        key,
-		Timestamp:  time.Now(),
+		CacheName: cacheName,
+		Instance:  instance,
+		Key:       key,
+		Timestamp: time.Now(),
 	}
 }

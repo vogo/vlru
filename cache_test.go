@@ -48,7 +48,7 @@ func (b *testBroker) Publish(_ context.Context, event *InvalidationEvent) error 
 	defer b.mu.Unlock()
 	b.events = append(b.events, *event)
 	// Route to registry with a fake remote instance ID to simulate distributed invalidation.
-	// In real scenarios, events come from different processes with different InstanceIDs.
+	// In real scenarios, events come from different processes with different Instances.
 	return registry.HandleEvent(event.CacheName, "remote-instance", event.Key)
 }
 

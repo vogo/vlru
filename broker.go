@@ -89,8 +89,8 @@ func StartEventBroker(runner *vrun.Runner, broker Broker) {
 			if event == nil {
 				return
 			}
-			vlog.Debugf("vlru invalidation event | cache: %s | instance: %s | key: %s", event.CacheName, event.InstanceID, event.Key)
-			if err := registry.HandleEvent(event.CacheName, event.InstanceID, event.Key); err != nil {
+			vlog.Debugf("vlru invalidation event | cache: %s | instance: %s | key: %s", event.CacheName, event.Instance, event.Key)
+			if err := registry.HandleEvent(event.CacheName, event.Instance, event.Key); err != nil {
 				vlog.Errorf("vlru error handling event | err: %v", err)
 			}
 		case <-runner.C:

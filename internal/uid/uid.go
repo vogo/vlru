@@ -28,9 +28,9 @@ import (
 	"github.com/vogo/vogo/vnet"
 )
 
-// InstanceID is the unique identifier for this process instance.
+// Instance is the unique identifier for this process instance.
 // All caches in the same process share this ID.
-var InstanceID = generate()
+var Instance = generate()
 
 // generate creates a unique instance ID.
 // Priority: IP address > hostname > timestamp+randomBytes.

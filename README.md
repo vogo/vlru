@@ -67,7 +67,7 @@ Add() causes eviction → onEvict callback
 ```
 Broker receives event from network
   → routes to registry
-  → registry checks InstanceID != self
+  → registry checks Instance != self
   → finds cache by CacheName
   → cache.InvalidateKey() with suppressPublish=true
   → NO cascade event published

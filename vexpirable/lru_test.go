@@ -53,12 +53,12 @@ func (b *testBroker) Publish(_ context.Context, event *vlru.InvalidationEvent) e
 	b.events = append(b.events, *event)
 
 	// Route to channel with a fake remote instance ID to simulate distributed invalidation.
-	// In real scenarios, events come from different processes with different InstanceIDs.
+	// In real scenarios, events come from different processes with different Instances.
 	remoteEvent := &vlru.InvalidationEvent{
-		CacheName:  event.CacheName,
-		InstanceID: "remote-instance",
-		Key:        event.Key,
-		Timestamp:  event.Timestamp,
+		CacheName: event.CacheName,
+		Instance:  "remote-instance",
+		Key:       event.Key,
+		Timestamp: event.Timestamp,
 	}
 	select {
 	case b.ch <- remoteEvent:
