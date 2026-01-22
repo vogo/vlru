@@ -183,6 +183,97 @@ broker := inmemory.New()
 vlru.StartEventBroker(runner, broker)
 ```
 
+### Example: Redis Broker
+
+```go
+import (
+	"context"
+	"encoding/json"
+
+	"github.com/redis/go-redis/v9"
+	"github.com/vogo/vlru"
+	"github.com/vogo/vogo/vlog"
+	"github.com/vogo/vogo/vsync/vrun"
+)
+
+const vlruTopic = "vlru:invalidation"
+
+// RedisBroker implements vlru.Broker using Redis pub/sub for cache invalidation.
+type RedisBroker struct {
+	cli    *redis.Client
+	pubsub *redis.PubSub
+
+	receiveChan   chan *vlru.InvalidationEvent
+	receiveRunner *vrun.Runner
+}
+
+// NewRedisBroker creates a new RedisBroker with the given Redis client.
+func NewRedisBroker(cli *redis.Client) *RedisBroker {
+	return &RedisBroker{
+		cli:         cli,
+		receiveChan: make(chan *vlru.InvalidationEvent, 100),
+	}
+}
+
+// StartReceive starts the event receiver and returns a channel for receiving
+// invalidation events from other instances.
+func (b *RedisBroker) StartReceive(runner *vrun.Runner) <-chan *vlru.InvalidationEvent {
+	ctx := context.Background()
+	b.pubsub = b.cli.Subscribe(ctx, vlruTopic)
+	msgCh := b.pubsub.Channel()
+
+	b.receiveRunner = runner.NewChild()
+
+	b.receiveRunner.Loop(func() {
+		select {
+		case msg, ok := <-msgCh:
+			if !ok {
+				vlog.Infof("vlru pubsub channel closed")
+				return
+			}
+			vlog.Debugf("vlru pubsub message received | payload: %s", msg.Payload)
+
+			var event vlru.InvalidationEvent
+			if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
+				vlog.Errorf("failed to unmarshal vlru event | payload: %s | err: %v", msg.Payload, err)
+				return
+			}
+			b.receiveChan <- &event
+		case <-b.receiveRunner.C:
+			return
+		}
+	})
+
+	return b.receiveChan
+}
+
+// Publish sends an invalidation event to other instances via Redis pub/sub.
+func (b *RedisBroker) Publish(ctx context.Context, event *vlru.InvalidationEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	return b.cli.Publish(ctx, vlruTopic, data).Err()
+}
+
+// Close releases resources held by the broker.
+func (b *RedisBroker) Close() error {
+	if b.pubsub != nil {
+		return b.pubsub.Close()
+	}
+	if b.receiveRunner != nil {
+		b.receiveRunner.Stop()
+	}
+	return nil
+}
+
+// InitVlru initializes the vlru event broker with a Redis-backed broker.
+func InitVlru(runner *vrun.Runner) {
+	broker := NewRedisBroker(getCurrentRedisClient())
+	vlru.StartEventBroker(runner, broker)
+}
+```
+
 ## Key Serialization
 
 Keys must be serializable for network transport. By default, the following key types are supported without configuration:
