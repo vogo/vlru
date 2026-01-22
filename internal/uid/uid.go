@@ -21,10 +21,11 @@ package uid
 import (
 	"crypto/rand"
 	"encoding/hex"
-	"net"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/vogo/vogo/vnet"
 )
 
 // InstanceID is the unique identifier for this process instance.
@@ -35,7 +36,7 @@ var InstanceID = generate()
 // Priority: IP address > hostname > timestamp+randomBytes.
 func generate() string {
 	// Try to get local IP address first
-	if ip := getLocalIP(); ip != "" {
+	if ip, err := vnet.LocalIP(); err == nil && ip != "" {
 		return ip
 	}
 
@@ -46,24 +47,6 @@ func generate() string {
 
 	// Last resort: timestamp + random hex
 	return strconv.FormatInt(time.Now().UnixNano(), 10) + "-" + randomHex()
-}
-
-// getLocalIP returns the non-loopback local IP address, or empty string if not found.
-func getLocalIP() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-
-	for _, addr := range addrs {
-		if ipNet, ok := addr.(*net.IPNet); ok && !ipNet.IP.IsLoopback() {
-			if ipNet.IP.To4() != nil {
-				return ipNet.IP.String()
-			}
-		}
-	}
-
-	return ""
 }
 
 // randomHex generates a random hex string of length 8.
