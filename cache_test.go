@@ -52,7 +52,7 @@ func (b *testBroker) Publish(_ context.Context, event *InvalidationEvent) error 
 	return registry.HandleEvent(event.CacheName, "remote-instance", event.Key)
 }
 
-func (b *testBroker) Channel() <-chan *InvalidationEvent {
+func (b *testBroker) StartReceive(_ *vrun.Runner) <-chan *InvalidationEvent {
 	return b.ch
 }
 

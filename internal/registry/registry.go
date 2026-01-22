@@ -20,6 +20,8 @@ package registry
 
 import (
 	"sync"
+
+	"github.com/vogo/vogo/vlog"
 )
 
 // CacheInvalidator is implemented by caches that can receive invalidation events.
@@ -67,6 +69,10 @@ func (r *registry) register(cache CacheInvalidator) {
 	defer r.mu.Unlock()
 
 	name := cache.CacheName()
+	if old, exists := r.caches[name]; exists {
+		vlog.Warnf("vlru register duplicated cache | cache: %s | old: %v | new: %v", name, old, cache)
+	}
+
 	r.caches[name] = cache
 }
 

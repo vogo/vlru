@@ -34,8 +34,10 @@ type Broker interface {
 	// This is called when a local cache evicts or removes a key.
 	Publish(ctx context.Context, event *InvalidationEvent) error
 
-	// Channel returns a channel that receives invalidation events from other instances.
-	Channel() <-chan *InvalidationEvent
+	// StartReceive starts the event receiver and returns a channel for receiving
+	// invalidation events from other instances.
+	// The runner is used to manage the receiver lifecycle.
+	StartReceive(runner *vrun.Runner) <-chan *InvalidationEvent
 
 	// Close releases resources held by the broker.
 	Close() error
@@ -69,7 +71,7 @@ func StartEventBroker(runner *vrun.Runner, broker Broker) {
 		}
 	})
 
-	ch := broker.Channel()
+	ch := broker.StartReceive(runner)
 
 	runner.Loop(func() {
 		defer func() {

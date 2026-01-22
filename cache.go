@@ -65,13 +65,13 @@ func WithCacheName[K comparable, V any](name string) CacheOption[K, V] {
 // New creates a distributed LRU cache with the same signature as lru.New.
 // The cache name is auto-generated from the call site (file:function:line).
 func New[K comparable, V any](size int, opts ...CacheOption[K, V]) (*Cache[K, V], error) {
-	return newWithEvict[K, V](size, nil, caller.GetCallerName(1), opts...)
+	return newWithEvict(size, nil, caller.GetCallerName(1), opts...)
 }
 
 // NewWithEvict creates a cache with an eviction callback.
 // The cache name is auto-generated from the call site (file:function:line).
 func NewWithEvict[K comparable, V any](size int, onEvict func(K, V), opts ...CacheOption[K, V]) (*Cache[K, V], error) {
-	return newWithEvict[K, V](size, onEvict, caller.GetCallerName(1), opts...)
+	return newWithEvict(size, onEvict, caller.GetCallerName(1), opts...)
 }
 
 // newWithEvict is the internal constructor that accepts a pre-computed cache name.
@@ -88,7 +88,7 @@ func newWithEvict[K comparable, V any](size int, onEvict func(K, V), autoName st
 	}
 
 	// Create the underlying LRU with our eviction wrapper
-	cache, err := lru.NewWithEvict[K, V](size, c.handleEviction)
+	cache, err := lru.NewWithEvict(size, c.handleEviction)
 	if err != nil {
 		return nil, err
 	}

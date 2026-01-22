@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/vogo/vlru"
+	"github.com/vogo/vogo/vsync/vrun"
 )
 
 // Broker is an in-memory broker for testing.
@@ -31,14 +32,16 @@ type Broker struct {
 	mu     sync.RWMutex
 	closed bool
 	events []vlru.InvalidationEvent
-	ch     chan *vlru.InvalidationEvent
+
+	receiveChan   chan *vlru.InvalidationEvent
+	receiveRunner *vrun.Runner
 }
 
 // New creates a new in-memory broker.
 func New() *Broker {
 	return &Broker{
-		events: make([]vlru.InvalidationEvent, 0),
-		ch:     make(chan *vlru.InvalidationEvent, 100),
+		events:      make([]vlru.InvalidationEvent, 0),
+		receiveChan: make(chan *vlru.InvalidationEvent, 100),
 	}
 }
 
@@ -62,17 +65,24 @@ func (b *Broker) Publish(_ context.Context, event *vlru.InvalidationEvent) error
 		Key:        event.Key,
 		Timestamp:  event.Timestamp,
 	}
-	select {
-	case b.ch <- remoteEvent:
-	default:
+
+	if b.receiveRunner != nil {
+		select {
+		case <-b.receiveRunner.C:
+			return nil
+		case b.receiveChan <- remoteEvent:
+		default:
+		}
 	}
 
 	return nil
 }
 
-// Channel returns a channel that receives invalidation events.
-func (b *Broker) Channel() <-chan *vlru.InvalidationEvent {
-	return b.ch
+// StartReceive starts the event receiver and returns the channel.
+func (b *Broker) StartReceive(runner *vrun.Runner) <-chan *vlru.InvalidationEvent {
+	b.receiveRunner = runner
+
+	return b.receiveChan
 }
 
 // Close releases resources.
@@ -81,7 +91,7 @@ func (b *Broker) Close() error {
 	defer b.mu.Unlock()
 	if !b.closed {
 		b.closed = true
-		close(b.ch)
+		close(b.receiveChan)
 	}
 	return nil
 }

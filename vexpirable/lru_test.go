@@ -68,7 +68,7 @@ func (b *testBroker) Publish(_ context.Context, event *vlru.InvalidationEvent) e
 	return nil
 }
 
-func (b *testBroker) Channel() <-chan *vlru.InvalidationEvent {
+func (b *testBroker) StartReceive(_ *vrun.Runner) <-chan *vlru.InvalidationEvent {
 	return b.ch
 }
 
