@@ -24,6 +24,7 @@ import (
 
 func TestGetCallerName(t *testing.T) {
 	name := GetCallerName(0)
+	t.Logf("Caller name: %s", name)
 
 	// Should contain the test file name
 	if !strings.Contains(name, "caller_test.go") {
@@ -58,6 +59,8 @@ func TestGetCallerNameConsistency(t *testing.T) {
 	// Same call site should produce same name
 	name1 := GetCallerName(0)
 	name2 := GetCallerName(0)
+	t.Logf("Caller name 1: %s", name1)
+	t.Logf("Caller name 2: %s", name2)
 
 	// The names should be different because they're on different lines
 	if name1 == name2 {
@@ -81,15 +84,15 @@ func TestGetCallerNameConsistency(t *testing.T) {
 func TestGetCallerNameFormat(t *testing.T) {
 	name := GetCallerName(0)
 
-	// Should have format: file:func:line
+	// Should have format: func:file:line
 	parts := strings.Split(name, ":")
 	if len(parts) != 3 {
-		t.Errorf("Expected format file:func:line with 3 parts, got %d parts: %s", len(parts), name)
+		t.Errorf("Expected format func:file:line with 3 parts, got %d parts: %s", len(parts), name)
 	}
 
-	// First part should be the file name
-	if !strings.HasSuffix(parts[0], ".go") {
-		t.Errorf("Expected first part to be a .go file, got %s", parts[0])
+	// Second part should be the file name
+	if !strings.HasSuffix(parts[1], ".go") {
+		t.Errorf("Expected second part to be a .go file, got %s", parts[1])
 	}
 
 	// Last part should be a number

@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"runtime"
+	"strings"
 )
 
 // GetCallerName returns a consistent identifier based on the caller's location.
@@ -32,11 +33,11 @@ func GetCallerName(skip int) string {
 	}
 
 	fn := runtime.FuncForPC(pc)
-	funcName := ""
+	funcName := "-"
 	if fn != nil {
-		funcName = filepath.Base(fn.Name())
+		funcName = strings.ReplaceAll(fn.Name(), "/", "-")
 	}
 
 	file = filepath.Base(file)
-	return fmt.Sprintf("%s:%s:%d", file, funcName, line)
+	return fmt.Sprintf("%s:%s:%d", funcName, file, line)
 }
