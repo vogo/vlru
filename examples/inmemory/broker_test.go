@@ -36,13 +36,13 @@ func TestBrokerIntegration(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache1: %v", err)
 	}
-	defer cache1.Close()
+	defer func() { _ = cache1.Close() }()
 
 	cache2, err := vlru.New[string, int](10, vlru.WithCacheName[string, int]("inmemory-test"))
 	if err != nil {
 		t.Fatalf("Failed to create cache2: %v", err)
 	}
-	defer cache2.Close()
+	defer func() { _ = cache2.Close() }()
 
 	// Add key to both caches
 	cache1.Add("key1", 100)

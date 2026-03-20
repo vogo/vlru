@@ -96,7 +96,7 @@ func (b *testBroker) ClearEvents() {
 
 func TestLRUBasicOperations(t *testing.T) {
 	cache := NewLRU[string, int](10, nil, time.Hour)
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	// Add
 	cache.Add("key1", 1)
@@ -136,7 +136,7 @@ func TestLRUBasicOperations(t *testing.T) {
 
 func TestLRUExpiration(t *testing.T) {
 	cache := NewLRU[string, int](10, nil, 50*time.Millisecond)
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("key1", 1)
 
@@ -162,7 +162,7 @@ func TestLRUEvictionCallback(t *testing.T) {
 		evictedKey = k
 		evictedVal = v
 	}, time.Hour)
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("key1", 1)
 	cache.Add("key2", 2)
@@ -181,7 +181,7 @@ func TestLRUDistributedInvalidation(t *testing.T) {
 
 	// Create a cache instance
 	cache := NewLRU[string, int](10, nil, time.Hour, WithCacheName[string, int]("expirable-dist-test"))
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	// Add key to cache
 	cache.Add("shared-key", 100)
@@ -212,7 +212,7 @@ func TestLRUTTLExpirationPublishesEvent(t *testing.T) {
 	vlru.StartEventBroker(runner, broker)
 
 	cache := NewLRU[string, int](10, nil, 50*time.Millisecond)
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("expiring-key", 1)
 
@@ -232,8 +232,8 @@ func TestLRUWithCustomCacheName(t *testing.T) {
 	// Test that WithCacheName overrides auto-generated name
 	cache1 := NewLRU[string, int](10, nil, time.Hour)
 	cache2 := NewLRU[string, int](10, nil, time.Hour, WithCacheName[string, int]("custom-expirable"))
-	defer cache1.Close()
-	defer cache2.Close()
+	defer func() { _ = cache1.Close() }()
+	defer func() { _ = cache2.Close() }()
 
 	// cache1 should have auto-generated name (file:func:line)
 	if cache1.CacheName() == "" {
@@ -249,8 +249,8 @@ func TestLRUAutoNaming(t *testing.T) {
 	// Two caches created at different lines should have different names
 	cache1 := NewLRU[string, int](10, nil, time.Hour)
 	cache2 := NewLRU[string, int](10, nil, time.Hour)
-	defer cache1.Close()
-	defer cache2.Close()
+	defer func() { _ = cache1.Close() }()
+	defer func() { _ = cache2.Close() }()
 
 	// They should have different names since they're on different lines
 	if cache1.CacheName() == cache2.CacheName() {
@@ -266,7 +266,7 @@ func TestLRUAutoNaming(t *testing.T) {
 
 func TestLRUPurge(t *testing.T) {
 	cache := NewLRU[string, int](10, nil, time.Hour)
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("key1", 1)
 	cache.Add("key2", 2)

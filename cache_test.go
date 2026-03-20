@@ -83,7 +83,7 @@ func TestCacheBasicOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	// Add
 	cache.Add("key1", 1)
@@ -150,7 +150,7 @@ func TestCacheEviction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("key1", 1)
 	cache.Add("key2", 2)
@@ -171,7 +171,7 @@ func TestCacheEventPublishing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	// Add should not publish
 	cache.Add("key1", 1)
@@ -197,7 +197,7 @@ func TestCacheDistributedInvalidation(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	// Add key to cache
 	cache.Add("shared-key", 100)
@@ -236,7 +236,7 @@ func TestCacheCapacityEvictionPublishes(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add("key1", 1)
 	cache.Add("key2", 2)
@@ -263,7 +263,7 @@ func TestCacheWithCustomSerializer(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	cache.Add(42, "value")
 	cache.Remove(42)
@@ -277,8 +277,8 @@ func TestCacheWithCustomCacheName(t *testing.T) {
 	// Test that WithCacheName overrides auto-generated name
 	cache1, _ := New[string, int](10)
 	cache2, _ := New[string, int](10, WithCacheName[string, int]("custom-name"))
-	defer cache1.Close()
-	defer cache2.Close()
+	defer func() { _ = cache1.Close() }()
+	defer func() { _ = cache2.Close() }()
 
 	// cache1 should have auto-generated name (file:func:line)
 	if cache1.CacheName() == "" {
@@ -294,8 +294,8 @@ func TestCacheAutoNaming(t *testing.T) {
 	// Two caches created at different lines should have different names
 	cache1, _ := New[string, int](10)
 	cache2, _ := New[string, int](10)
-	defer cache1.Close()
-	defer cache2.Close()
+	defer func() { _ = cache1.Close() }()
+	defer func() { _ = cache2.Close() }()
 
 	// They should have different names since they're on different lines
 	if cache1.CacheName() == cache2.CacheName() {
@@ -317,7 +317,7 @@ func TestCacheAutoNamingSameLineLoop(t *testing.T) {
 	}
 	defer func() {
 		for _, c := range caches {
-			c.Close()
+			_ = c.Close()
 		}
 	}()
 
@@ -334,7 +334,7 @@ func TestCacheResize(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	for i := 0; i < 10; i++ {
 		cache.Add(string(rune('a'+i)), i)
@@ -358,7 +358,7 @@ func TestCacheConcurrentAccess(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	var wg sync.WaitGroup
 	var ops int64
@@ -410,7 +410,7 @@ func TestCacheConcurrentInvalidateKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	const numKeys = 100
 	const numGoroutines = 10
@@ -491,7 +491,7 @@ func TestCacheConcurrentInvalidateKeySameKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	const numGoroutines = 50
 	const iterations = 100
@@ -533,7 +533,7 @@ func TestCacheMixedConcurrentOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create cache: %v", err)
 	}
-	defer cache.Close()
+	defer func() { _ = cache.Close() }()
 
 	const numOps = 1000
 	var wg sync.WaitGroup

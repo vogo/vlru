@@ -60,7 +60,7 @@ func GetBroker() Broker {
 func StartEventBroker(runner *vrun.Runner, broker Broker) {
 	globalBrokerLock.Lock()
 	if globalBroker != nil {
-		globalBroker.Close()
+		_ = globalBroker.Close()
 	}
 	globalBroker = broker
 	globalBrokerLock.Unlock()
