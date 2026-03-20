@@ -1,5 +1,8 @@
 # vlru
 
+[![CI](https://github.com/vogo/vlru/actions/workflows/ci.yml/badge.svg)](https://github.com/vogo/vlru/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/vogo/vlru/branch/main/graph/badge.svg)](https://codecov.io/gh/vogo/vlru)
+
 A Go LRU cache library with distributed cache invalidation, based on [hashicorp/golang-lru](https://github.com/hashicorp/golang-lru).
 
 ## Features
