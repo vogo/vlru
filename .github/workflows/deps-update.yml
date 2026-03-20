@@ -1,0 +1,67 @@
+name: Dependency Update Check
+
+on:
+  schedule:
+    - cron: '0 8 * * *' # Run daily at 08:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-deps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Check and update dependencies
+        id: update
+        run: |
+          # Record current state
+          cp go.mod go.mod.bak
+          cp go.sum go.sum.bak
+
+          # Update dependencies
+          go get -u github.com/hashicorp/golang-lru/v2
+          go get -u github.com/vogo/vogo
+          go mod tidy
+
+          # Check if anything changed
+          if diff -q go.mod go.mod.bak > /dev/null 2>&1 && diff -q go.sum go.sum.bak > /dev/null 2>&1; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+            echo "No dependency updates found."
+          else
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+            # Generate update summary
+            SUMMARY=$(diff go.mod.bak go.mod || true)
+            echo "summary<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$SUMMARY" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Clean up backup files
+          rm -f go.mod.bak go.sum.bak
+
+      - name: Create Pull Request
+        if: steps.update.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'deps: update Go module dependencies'
+          title: 'deps: update Go module dependencies'
+          body: |
+            Automated dependency update.
+
+            ```diff
+            ${{ steps.update.outputs.summary }}
+            ```
+          branch: deps/auto-update
+          delete-branch: true
+          labels: dependencies
